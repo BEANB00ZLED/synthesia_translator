@@ -22,7 +22,7 @@
         <item row="0" column="0">
          <widget class="QLineEdit" name="filePathLine">
           <property name="text">
-           <string></string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -38,10 +38,13 @@
      </layout>
     </item>
     <item>
-     <widget class="QMdiArea" name="mdiArea"/>
+     <widget class="QGraphicsView" name="videoView"/>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="spacing">
+       <number>7</number>
+      </property>
       <item>
        <widget class="QPushButton" name="calculateKeysButton">
         <property name="text">
