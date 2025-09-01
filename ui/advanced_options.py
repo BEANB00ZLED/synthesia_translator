@@ -44,4 +44,4 @@ class Ui_AdvancedOptions(object):
     def retranslateUi(self, AdvancedOptions):
         _translate = QtCore.QCoreApplication.translate
         AdvancedOptions.setWindowTitle(_translate("AdvancedOptions", "Advanced Options"))
-        self.keyOffsetLabel.setText(_translate("AdvancedOptions", "Key Offset [% from top]"))
+        self.keyOffsetLabel.setText(_translate("AdvancedOptions", "Key Read Offset [% from top]"))

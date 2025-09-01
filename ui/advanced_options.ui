@@ -35,7 +35,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="keyOffsetLabel">
        <property name="text">
-        <string>Key Offset [% from top]</string>
+        <string>Key Read Offset [% from top]</string>
        </property>
       </widget>
      </item>

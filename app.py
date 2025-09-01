@@ -1,15 +1,35 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDialog
 from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtCore import pyqtSignal
 from ui.main_window import Ui_MainWindow
 from ui.advanced_options import Ui_AdvancedOptions
+from dataclasses import dataclass
 import cv2
 
 
+@dataclass
+class AdvancedOptions:
+    keyOffset: int
+
+
 class AdvancedOptionsWindow(QDialog, Ui_AdvancedOptions):
-    def __init__(self):
+    advancedOptions = pyqtSignal(AdvancedOptions)
+
+    def __init__(self, advancedOptions: AdvancedOptions):
         super().__init__()
         self.setupUi(self)
+
+        # Set values to stored inputs
+        self.keyOffsetSpinBox.setValue(advancedOptions.keyOffset)
+
+        # ----- Creating UI connections -----
+        self.buttonBox.accepted.connect(self.emitValues)
+
+    def emitValues(self):
+        updatedOptions = AdvancedOptions(keyOffset=self.keyOffsetSpinBox.value())
+        self.advancedOptions.emit(updatedOptions)
+        self.accept()
 
 
 class App(QMainWindow, Ui_MainWindow):
@@ -18,7 +38,12 @@ class App(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.videoCapture: cv2.VideoCapture
-        self.advancedOptionsWindow = AdvancedOptionsWindow()
+
+        # ----- Advanced Options -----
+        self.advancedOptionsWindow: QDialog
+        self.advancedOptions = AdvancedOptions(keyOffset=90)
+
+        # ----- Creating UI connections ------
 
         # ----- Connecting UI to functions ------
         self.fileBrowseButton.clicked.connect(self.browseFiles)
@@ -59,9 +84,16 @@ class App(QMainWindow, Ui_MainWindow):
         self.videoLabel.setPixmap(pixmap)
 
     def openAdvancedOptions(self):
+        # Create window with current values
+        self.advancedOptionsWindow = AdvancedOptionsWindow(self.advancedOptions)
+        # Connect local variable to signal
+        self.advancedOptionsWindow.advancedOptions.connect(self.updatedAdvancedOptions)
         self.advancedOptionsWindow.show()
         self.advancedOptionsWindow.raise_()
         self.advancedOptionsWindow.activateWindow()
+
+    def updatedAdvancedOptions(self, upadtedOptions: AdvancedOptions):
+        self.advancedOptions = upadtedOptions
 
 
 if __name__ == "__main__":
