@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'synthesia_translator.ui'
+# Form implementation generated from reading ui file 'e:\synthesia_translator\ui\main_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -25,6 +25,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.filePathLine = QtWidgets.QLineEdit(self.centralwidget)
         self.filePathLine.setText("")
+        self.filePathLine.setReadOnly(True)
         self.filePathLine.setObjectName("filePathLine")
         self.gridLayout_2.addWidget(self.filePathLine, 0, 0, 1, 1)
         self.fileBrowseButton = QtWidgets.QPushButton(self.centralwidget)
@@ -32,19 +33,30 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.fileBrowseButton, 0, 1, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout_2)
         self.verticalLayout_2.addLayout(self.verticalLayout)
-        self.videoView = QtWidgets.QGraphicsView(self.centralwidget)
-        self.videoView.setObjectName("videoView")
-        self.verticalLayout_2.addWidget(self.videoView)
+        self.videoLabel = QtWidgets.QLabel(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.videoLabel.sizePolicy().hasHeightForWidth())
+        self.videoLabel.setSizePolicy(sizePolicy)
+        self.videoLabel.setMouseTracking(True)
+        self.videoLabel.setScaledContents(True)
+        self.videoLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.videoLabel.setObjectName("videoLabel")
+        self.verticalLayout_2.addWidget(self.videoLabel)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setSpacing(7)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.calculateKeysButton = QtWidgets.QPushButton(self.centralwidget)
         self.calculateKeysButton.setObjectName("calculateKeysButton")
         self.horizontalLayout_2.addWidget(self.calculateKeysButton)
+        self.advancedOptionsButton = QtWidgets.QPushButton(self.centralwidget)
+        self.advancedOptionsButton.setObjectName("advancedOptionsButton")
+        self.horizontalLayout_2.addWidget(self.advancedOptionsButton)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.transcribeVideoButton = QtWidgets.QPushButton(self.centralwidget)
         self.transcribeVideoButton.setObjectName("transcribeVideoButton")
-        self.horizontalLayout_2.addWidget(self.transcribeVideoButton)
-        self.verticalLayout_2.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_2.addWidget(self.transcribeVideoButton)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -54,15 +66,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Synthesia Tutorial Translator"))
         self.fileBrowseButton.setText(_translate("MainWindow", "Browse"))
+        self.videoLabel.setText(_translate("MainWindow", "Select Video File to Preview"))
         self.calculateKeysButton.setText(_translate("MainWindow", "Calculate Key Locations"))
+        self.advancedOptionsButton.setText(_translate("MainWindow", "Advanced Options"))
         self.transcribeVideoButton.setText(_translate("MainWindow", "Transcribe Video"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())

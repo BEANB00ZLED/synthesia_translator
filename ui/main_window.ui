@@ -24,6 +24,9 @@
           <property name="text">
            <string/>
           </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item row="0" column="1">
@@ -38,7 +41,26 @@
      </layout>
     </item>
     <item>
-     <widget class="QGraphicsView" name="videoView"/>
+     <widget class="QLabel" name="videoLabel">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string>Select Video File to Preview</string>
+      </property>
+      <property name="scaledContents">
+       <bool>true</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -53,13 +75,20 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="transcribeVideoButton">
+       <widget class="QPushButton" name="advancedOptionsButton">
         <property name="text">
-         <string>Transcribe Video</string>
+         <string>Advanced Options</string>
         </property>
        </widget>
       </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QPushButton" name="transcribeVideoButton">
+      <property name="text">
+       <string>Transcribe Video</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

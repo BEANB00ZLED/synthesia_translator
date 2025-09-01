@@ -1,6 +1,15 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
-from ui import Ui_MainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDialog
+from PyQt5.QtGui import QImage, QPixmap
+from ui.main_window import Ui_MainWindow
+from ui.advanced_options import Ui_AdvancedOptions
+import cv2
+
+
+class AdvancedOptionsWindow(QDialog, Ui_AdvancedOptions):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
 
 
 class App(QMainWindow, Ui_MainWindow):
@@ -8,16 +17,51 @@ class App(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
+        self.videoCapture: cv2.VideoCapture
+        self.advancedOptionsWindow = AdvancedOptionsWindow()
+
         # ----- Connecting UI to functions ------
         self.fileBrowseButton.clicked.connect(self.browseFiles)
+        self.advancedOptionsButton.clicked.connect(self.openAdvancedOptions)
 
     def browseFiles(self):
         dlg = QFileDialog()
         dlg.setFileMode(QFileDialog.ExistingFile)
         dlg.setNameFilter("Video Files (*.mp4)")
+        # On filebrowser open
         if dlg.exec_():
-            fname = dlg.selectedFiles()
-            self.filePathLine.setText(fname[0])
+            selectedFile = dlg.selectedFiles()[0]
+            self.filePathLine.setText(selectedFile)
+            self.openFile(selectedFile)
+
+    def openFile(self, fileName):
+        self.videoCapture = cv2.VideoCapture(fileName)
+        fps = round(self.videoCapture.get(cv2.CAP_PROP_FPS), 0)
+        numFrames = self.videoCapture.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.videoCapture.set(
+            cv2.CAP_PROP_POS_FRAMES, 1000
+        )  # temp for now so not starting on black frame
+        self.displayNextFrame()
+
+        print(f"Video FPS: {fps}")
+        print(f"Number of frames: {numFrames}")
+
+    def displayNextFrame(self):
+        if not self.videoCapture:
+            return
+
+        ret, frame = self.videoCapture.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        height, width, channels = frame.shape
+        bytesPerLine = channels * width
+        qImg = QImage(frame.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(qImg)
+        self.videoLabel.setPixmap(pixmap)
+
+    def openAdvancedOptions(self):
+        self.advancedOptionsWindow.show()
+        self.advancedOptionsWindow.raise_()
+        self.advancedOptionsWindow.activateWindow()
 
 
 if __name__ == "__main__":
