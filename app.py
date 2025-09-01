@@ -4,13 +4,8 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import pyqtSignal
 from ui.main_window import Ui_MainWindow
 from ui.advanced_options import Ui_AdvancedOptions
-from dataclasses import dataclass
+from data_types import AdvancedOptions
 import cv2
-
-
-@dataclass
-class AdvancedOptions:
-    keyOffset: int
 
 
 class AdvancedOptionsWindow(QDialog, Ui_AdvancedOptions):
@@ -41,7 +36,7 @@ class App(QMainWindow, Ui_MainWindow):
 
         # ----- Advanced Options -----
         self.advancedOptionsWindow: QDialog
-        self.advancedOptions = AdvancedOptions(keyOffset=90)
+        self.advancedOptions = AdvancedOptions()
 
         # ----- Creating UI connections ------
 
