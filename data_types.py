@@ -2,11 +2,6 @@ from enum import Enum
 from dataclasses import dataclass
 
 
-@dataclass
-class AdvancedOptions:
-    keyOffset: int = 20
-
-
 class PianoKey(Enum):
     A0 = 0
     A0sBb0 = 1
@@ -96,3 +91,10 @@ class PianoKey(Enum):
     A7sBb7 = 85
     B7 = 86
     C8 = 87
+
+
+@dataclass
+class AdvancedOptions:
+    keyOffset: int = 20
+    keyDifferenceThreshold: int = 25
+    startingKey: PianoKey = PianoKey.A0
