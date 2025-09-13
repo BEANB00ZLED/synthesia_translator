@@ -6,6 +6,7 @@ from ui.main_window import Ui_MainWindow
 from ui.advanced_options import Ui_AdvancedOptions
 from data_types import AdvancedOptions
 import cv2
+import vision
 
 
 class AdvancedOptionsWindow(QDialog, Ui_AdvancedOptions):
@@ -33,6 +34,8 @@ class App(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.videoCapture: cv2.VideoCapture
+        self.baseFrame: cv2.typing.MatLike
+        self.previewedFrame: cv2.typing.MatLike
 
         # ----- Advanced Options -----
         self.advancedOptionsWindow: QDialog
@@ -43,6 +46,7 @@ class App(QMainWindow, Ui_MainWindow):
         # ----- Connecting UI to functions ------
         self.fileBrowseButton.clicked.connect(self.browseFiles)
         self.advancedOptionsButton.clicked.connect(self.openAdvancedOptions)
+        self.calculateKeysButton.clicked.connect(self.previewKeyDetection)
 
     def browseFiles(self):
         dlg = QFileDialog()
@@ -61,20 +65,30 @@ class App(QMainWindow, Ui_MainWindow):
         self.videoCapture.set(
             cv2.CAP_PROP_POS_FRAMES, 1000
         )  # temp for now so not starting on black frame
-        self.displayNextFrame()
+        self.getFrame()
+        self.displayCurrentFrame()
+        self.calculateKeysButton.setEnabled(True)
 
         print(f"Video FPS: {fps}")
         print(f"Number of frames: {numFrames}")
 
-    def displayNextFrame(self):
+    def getFrame(self):
         if not self.videoCapture:
             return
 
         ret, frame = self.videoCapture.read()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        height, width, channels = frame.shape
+        self.baseFrame = frame
+        self.previewedFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    def displayCurrentFrame(self):
+        if self.previewedFrame is None:
+            return
+
+        height, width, channels = self.previewedFrame.shape
         bytesPerLine = channels * width
-        qImg = QImage(frame.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        qImg = QImage(
+            self.previewedFrame.data, width, height, bytesPerLine, QImage.Format_RGB888
+        )
         pixmap = QPixmap.fromImage(qImg)
         self.videoLabel.setPixmap(pixmap)
 
@@ -89,6 +103,16 @@ class App(QMainWindow, Ui_MainWindow):
 
     def updatedAdvancedOptions(self, upadtedOptions: AdvancedOptions):
         self.advancedOptions = upadtedOptions
+
+    def previewKeyDetection(self):
+        self.previewedFrame = self.baseFrame.copy()
+        self.previewedFrame = cv2.cvtColor(self.previewedFrame, cv2.COLOR_BGR2RGB)
+        keyLocations = vision.determineKeyLocations(
+            self.baseFrame, self.advancedOptions
+        )
+        for x, y in keyLocations:
+            cv2.circle(self.previewedFrame, (x, y), 1, (0, 255, 0), -1)
+        self.displayCurrentFrame()
 
 
 if __name__ == "__main__":

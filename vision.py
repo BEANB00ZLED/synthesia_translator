@@ -5,9 +5,9 @@ import numpy as np
 
 
 def determineKeyLocations(
-    frame, advancedOptions: AdvancedOptions
+    frame: cv2.typing.MatLike, advancedOptions: AdvancedOptions
 ) -> list[tuple[int, int]]:
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    frame = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
     keySlice = [
         int(pixel[2])
         for pixel in frame[
@@ -40,6 +40,10 @@ def determineKeyLocations(
         for keyBoundary in keyBoundaries
     ]
     return keyLocations
+
+
+def transcribeVideo():
+    pass
 
 
 def main():
