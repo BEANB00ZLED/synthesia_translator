@@ -42,6 +42,14 @@ def determineKeyLocations(
     return keyLocations
 
 
+def readKeys(
+    video: cv2.VideoCapture,
+    keyLocations: list[tuple[int, int]],
+    advancedOptions: AdvancedOptions,
+):
+    pass
+
+
 def transcribeVideo():
     pass
 

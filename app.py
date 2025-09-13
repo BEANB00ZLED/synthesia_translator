@@ -62,9 +62,6 @@ class App(QMainWindow, Ui_MainWindow):
         self.videoCapture = cv2.VideoCapture(fileName)
         fps = round(self.videoCapture.get(cv2.CAP_PROP_FPS), 0)
         numFrames = self.videoCapture.get(cv2.CAP_PROP_FRAME_COUNT)
-        self.videoCapture.set(
-            cv2.CAP_PROP_POS_FRAMES, 1000
-        )  # temp for now so not starting on black frame
         self.getFrame()
         self.displayCurrentFrame()
         self.calculateKeysButton.setEnabled(True)
@@ -113,6 +110,7 @@ class App(QMainWindow, Ui_MainWindow):
         for x, y in keyLocations:
             cv2.circle(self.previewedFrame, (x, y), 1, (0, 255, 0), -1)
         self.displayCurrentFrame()
+        self.transcribeVideoButton.setEnabled(True)
 
 
 if __name__ == "__main__":
