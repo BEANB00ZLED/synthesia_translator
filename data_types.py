@@ -2,6 +2,12 @@ from enum import Enum
 from dataclasses import dataclass
 
 
+class Notation(Enum):
+    Unpressed = "X"
+    LeftHand = "L"
+    RightHand = "R"
+
+
 class PianoKey(Enum):
     A0 = 0
     A0sBb0 = 1
