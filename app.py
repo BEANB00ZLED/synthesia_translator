@@ -5,6 +5,7 @@ from PyQt5.QtCore import pyqtSignal
 from ui.main_window import Ui_MainWindow
 from ui.advanced_options import Ui_AdvancedOptions
 from data_types import AdvancedOptions
+from app_logging import logger, LogLevel
 import cv2
 import vision
 
@@ -42,11 +43,12 @@ class App(QMainWindow, Ui_MainWindow):
         self.advancedOptions = AdvancedOptions()
 
         # ----- Creating UI connections ------
+        logger.logSignal.connect(self.log)
 
         # ----- Connecting UI to functions ------
         self.fileBrowseButton.clicked.connect(self.browseFiles)
         self.advancedOptionsButton.clicked.connect(self.openAdvancedOptions)
-        self.calculateKeysButton.clicked.connect(self.previewKeyDetection)
+        self.previewKeysButton.clicked.connect(self.previewKeyDetection)
 
     def browseFiles(self):
         dlg = QFileDialog()
@@ -64,10 +66,10 @@ class App(QMainWindow, Ui_MainWindow):
         numFrames = self.videoCapture.get(cv2.CAP_PROP_FRAME_COUNT)
         self.getFrame()
         self.displayCurrentFrame()
-        self.calculateKeysButton.setEnabled(True)
+        self.previewKeysButton.setEnabled(True)
 
-        print(f"Video FPS: {fps}")
-        print(f"Number of frames: {numFrames}")
+        logger.sendLog(f"Opened video file: {fileName}.", LogLevel.INFO)
+        logger.sendLog(f"Frames per second: {fps}.", LogLevel.INFO)
 
     def getFrame(self):
         if not self.videoCapture:
@@ -111,6 +113,18 @@ class App(QMainWindow, Ui_MainWindow):
             cv2.circle(self.previewedFrame, (x, y), 1, (0, 255, 0), -1)
         self.displayCurrentFrame()
         self.transcribeVideoButton.setEnabled(True)
+
+        logger.sendLog(f"Detected {len(keyLocations)} keys.", LogLevel.INFO)
+
+        fullPianoKeyLocations = 88
+        if len(keyLocations) < fullPianoKeyLocations:
+            logger.sendLog(
+                f"Detected fewer than {fullPianoKeyLocations} keys. Consider adjusting detection parameters or starting key's note.",
+                LogLevel.WARNING,
+            )
+
+    def log(self, message: str):
+        self.logOutput.appendPlainText(message)
 
 
 if __name__ == "__main__":
