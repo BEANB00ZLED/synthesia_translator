@@ -4,7 +4,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import pyqtSignal
 from ui.main_window import Ui_MainWindow
 from ui.advanced_options import Ui_AdvancedOptions
-from data_types import AdvancedOptions
+from data_types import AdvancedOptions, PianoKey
 from app_logging import logger, LogLevel
 import cv2
 import vision
@@ -14,17 +14,31 @@ class AdvancedOptionsWindow(QDialog, Ui_AdvancedOptions):
     advancedOptions = pyqtSignal(AdvancedOptions)
 
     def __init__(self, advancedOptions: AdvancedOptions):
+
         super().__init__()
         self.setupUi(self)
 
         # Set values to stored inputs
         self.keyOffsetSpinBox.setValue(advancedOptions.keyOffset)
+        self.keyDifferenceThresholdSpinBox.setValue(
+            advancedOptions.keyDifferenceThreshold
+        )
+        for key in PianoKey:
+            self.startingKeyNoteComboBox.addItem(key.name, key.value)
+            if key == advancedOptions.startingKey:
+                self.startingKeyNoteComboBox.setCurrentIndex(
+                    self.startingKeyNoteComboBox.findText(key.name)
+                )
 
         # ----- Creating UI connections -----
         self.buttonBox.accepted.connect(self.emitValues)
 
     def emitValues(self):
-        updatedOptions = AdvancedOptions(keyOffset=self.keyOffsetSpinBox.value())
+        updatedOptions = AdvancedOptions(
+            keyOffset=self.keyOffsetSpinBox.value(),
+            keyDifferenceThreshold=self.keyDifferenceThresholdSpinBox.value(),
+            startingKey=PianoKey(self.startingKeyNoteComboBox.currentData()),
+        )
         self.advancedOptions.emit(updatedOptions)
         self.accept()
 
@@ -100,8 +114,25 @@ class App(QMainWindow, Ui_MainWindow):
         self.advancedOptionsWindow.raise_()
         self.advancedOptionsWindow.activateWindow()
 
-    def updatedAdvancedOptions(self, upadtedOptions: AdvancedOptions):
-        self.advancedOptions = upadtedOptions
+    def updatedAdvancedOptions(self, updatedOptions: AdvancedOptions):
+        if self.advancedOptions.keyOffset != updatedOptions.keyOffset:
+            logger.sendLog(
+                f"Key Offset changed to {updatedOptions.keyOffset}.", LogLevel.INFO
+            )
+        if (
+            self.advancedOptions.keyDifferenceThreshold
+            != updatedOptions.keyDifferenceThreshold
+        ):
+            logger.sendLog(
+                f"Key Difference Threshold changed to {updatedOptions.keyDifferenceThreshold}.",
+                LogLevel.INFO,
+            )
+        if self.advancedOptions.startingKey != updatedOptions.startingKey:
+            logger.sendLog(
+                f"Starting Key changed to {updatedOptions.startingKey.name}.",
+                LogLevel.INFO,
+            )
+        self.advancedOptions = updatedOptions
 
     def previewKeyDetection(self):
         self.previewedFrame = self.baseFrame.copy()
@@ -117,9 +148,12 @@ class App(QMainWindow, Ui_MainWindow):
         logger.sendLog(f"Detected {len(keyLocations)} keys.", LogLevel.INFO)
 
         fullPianoKeyLocations = 88
-        if len(keyLocations) < fullPianoKeyLocations:
+        if (
+            len(keyLocations)
+            < fullPianoKeyLocations - self.advancedOptions.startingKey.value
+        ):
             logger.sendLog(
-                f"Detected fewer than {fullPianoKeyLocations} keys. Consider adjusting detection parameters or starting key's note.",
+                f"Detected fewer than {fullPianoKeyLocations} keys. Consider adjusting detection parameters or starting key / note.",
                 LogLevel.WARNING,
             )
 

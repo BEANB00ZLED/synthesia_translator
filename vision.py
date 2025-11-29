@@ -6,6 +6,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.mixture import GaussianMixture
 import numpy as np
 import pandas as pd
+from app_logging import logger, LogLevel
 
 
 def determineKeyLocations(
@@ -59,7 +60,17 @@ def readKeys(
         if not ret:
             break
         frame = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
-        row = {key.name: frame[y][x] for (x, y), key in zip(keyLocations, PianoKey)}
+        pianoKeyRange = [
+            key for key in PianoKey if key.value >= advancedOptions.startingKey.value
+        ]
+        if len(keyLocations) != len(pianoKeyRange):
+            logger.sendLog(
+                "Number of detected keys is not equal to expected number of keys based on starting key, this may cause errors in transcription.",
+                LogLevel.WARNING,
+            )
+        row = {
+            key.name: frame[y][x] for (x, y), key in zip(keyLocations, pianoKeyRange)
+        }
         data.append(row)
     df = pd.DataFrame(data)
     if debug:
@@ -197,6 +208,7 @@ def transcribeVideo():
     pass
 
 
+# Just for local debugging
 def main():
     videoCapture = cv2.VideoCapture("./Hercules -.mp4")
     if not videoCapture.isOpened():
