@@ -4,7 +4,8 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import pyqtSignal
 from ui.main_window import Ui_MainWindow
 from ui.advanced_options import Ui_AdvancedOptions
-from data_types import AdvancedOptions
+from data_types import AdvancedOptions, PianoKey
+from app_logging import logger, LogLevel
 import cv2
 import vision
 
@@ -13,17 +14,31 @@ class AdvancedOptionsWindow(QDialog, Ui_AdvancedOptions):
     advancedOptions = pyqtSignal(AdvancedOptions)
 
     def __init__(self, advancedOptions: AdvancedOptions):
+
         super().__init__()
         self.setupUi(self)
 
         # Set values to stored inputs
         self.keyOffsetSpinBox.setValue(advancedOptions.keyOffset)
+        self.keyDifferenceThresholdSpinBox.setValue(
+            advancedOptions.keyDifferenceThreshold
+        )
+        for key in PianoKey:
+            self.startingKeyNoteComboBox.addItem(key.name, key.value)
+            if key == advancedOptions.startingKey:
+                self.startingKeyNoteComboBox.setCurrentIndex(
+                    self.startingKeyNoteComboBox.findText(key.name)
+                )
 
         # ----- Creating UI connections -----
         self.buttonBox.accepted.connect(self.emitValues)
 
     def emitValues(self):
-        updatedOptions = AdvancedOptions(keyOffset=self.keyOffsetSpinBox.value())
+        updatedOptions = AdvancedOptions(
+            keyOffset=self.keyOffsetSpinBox.value(),
+            keyDifferenceThreshold=self.keyDifferenceThresholdSpinBox.value(),
+            startingKey=PianoKey(self.startingKeyNoteComboBox.currentData()),
+        )
         self.advancedOptions.emit(updatedOptions)
         self.accept()
 
@@ -42,11 +57,12 @@ class App(QMainWindow, Ui_MainWindow):
         self.advancedOptions = AdvancedOptions()
 
         # ----- Creating UI connections ------
+        logger.logSignal.connect(self.log)
 
         # ----- Connecting UI to functions ------
         self.fileBrowseButton.clicked.connect(self.browseFiles)
         self.advancedOptionsButton.clicked.connect(self.openAdvancedOptions)
-        self.calculateKeysButton.clicked.connect(self.previewKeyDetection)
+        self.previewKeysButton.clicked.connect(self.previewKeyDetection)
 
     def browseFiles(self):
         dlg = QFileDialog()
@@ -62,15 +78,12 @@ class App(QMainWindow, Ui_MainWindow):
         self.videoCapture = cv2.VideoCapture(fileName)
         fps = round(self.videoCapture.get(cv2.CAP_PROP_FPS), 0)
         numFrames = self.videoCapture.get(cv2.CAP_PROP_FRAME_COUNT)
-        self.videoCapture.set(
-            cv2.CAP_PROP_POS_FRAMES, 1000
-        )  # temp for now so not starting on black frame
         self.getFrame()
         self.displayCurrentFrame()
-        self.calculateKeysButton.setEnabled(True)
+        self.previewKeysButton.setEnabled(True)
 
-        print(f"Video FPS: {fps}")
-        print(f"Number of frames: {numFrames}")
+        logger.sendLog(f"Opened video file: {fileName}.", LogLevel.INFO)
+        logger.sendLog(f"Frames per second: {fps}.", LogLevel.INFO)
 
     def getFrame(self):
         if not self.videoCapture:
@@ -101,8 +114,25 @@ class App(QMainWindow, Ui_MainWindow):
         self.advancedOptionsWindow.raise_()
         self.advancedOptionsWindow.activateWindow()
 
-    def updatedAdvancedOptions(self, upadtedOptions: AdvancedOptions):
-        self.advancedOptions = upadtedOptions
+    def updatedAdvancedOptions(self, updatedOptions: AdvancedOptions):
+        if self.advancedOptions.keyOffset != updatedOptions.keyOffset:
+            logger.sendLog(
+                f"Key Offset changed to {updatedOptions.keyOffset}.", LogLevel.INFO
+            )
+        if (
+            self.advancedOptions.keyDifferenceThreshold
+            != updatedOptions.keyDifferenceThreshold
+        ):
+            logger.sendLog(
+                f"Key Difference Threshold changed to {updatedOptions.keyDifferenceThreshold}.",
+                LogLevel.INFO,
+            )
+        if self.advancedOptions.startingKey != updatedOptions.startingKey:
+            logger.sendLog(
+                f"Starting Key changed to {updatedOptions.startingKey.name}.",
+                LogLevel.INFO,
+            )
+        self.advancedOptions = updatedOptions
 
     def previewKeyDetection(self):
         self.previewedFrame = self.baseFrame.copy()
@@ -113,6 +143,22 @@ class App(QMainWindow, Ui_MainWindow):
         for x, y in keyLocations:
             cv2.circle(self.previewedFrame, (x, y), 1, (0, 255, 0), -1)
         self.displayCurrentFrame()
+        self.transcribeVideoButton.setEnabled(True)
+
+        logger.sendLog(f"Detected {len(keyLocations)} keys.", LogLevel.INFO)
+
+        fullPianoKeyLocations = 88
+        if (
+            len(keyLocations)
+            < fullPianoKeyLocations - self.advancedOptions.startingKey.value
+        ):
+            logger.sendLog(
+                f"Detected fewer than {fullPianoKeyLocations} keys. Consider adjusting detection parameters or starting key / note.",
+                LogLevel.WARNING,
+            )
+
+    def log(self, message: str):
+        self.logOutput.appendPlainText(message)
 
 
 if __name__ == "__main__":
