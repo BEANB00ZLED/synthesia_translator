@@ -13,6 +13,7 @@ def determineKeyLocations(
     frame: cv2.typing.MatLike, advancedOptions: AdvancedOptions
 ) -> list[tuple[int, int]]:
     frame = cv2.cvtColor(frame.copy(), cv2.COLOR_BGR2HSV)
+    # Analyze horizontal row of pixels where keys are
     keySlice = [
         int(pixel[2])
         for pixel in frame[
@@ -22,21 +23,43 @@ def determineKeyLocations(
     keyBoundaries = []
     leftEdge = 0
     i = 0
-    windowSize = 3
+    windowSize = round(frame.shape[1] * 0.0025)
+    if windowSize < 2:
+        windowSize = 2
+    logger.sendLog(
+        f"Determining key locations with window size {windowSize} pixels...",
+        LogLevel.DEBUG,
+    )
     isSettled = False
+    # Slide window across key slice
     while i < len(keySlice) - windowSize + 1:
         window = keySlice[i : i + windowSize]
         maxDiff = max(window) - min(window)
-        # If there is a big jump in value, assume edge of key
+        # If there is a big jump in value within the window when we were previously not, assume edge of key
         if maxDiff >= advancedOptions.keyDifferenceThreshold and isSettled:
             keyBoundaries.append((leftEdge, i + 1))
             leftEdge = i
             isSettled = False
+        # If all the values within the window are similar when we were previously not, assume we are traversing across a key
         elif maxDiff <= advancedOptions.keyDifferenceThreshold and not isSettled:
             isSettled = True
             leftEdge = i
         i += 1
+    # Find keys boundaries are from last detected edge to end of slice
     keyBoundaries.append((leftEdge, len(keySlice) - 1))
+
+    # If more that 88 keys are detected, delete the shortest keys until only 88 remain
+    fullPianoKeyLocations = 88
+    if len(keyBoundaries) > fullPianoKeyLocations:
+        logger.sendLog(
+            f"Detected {len(keyBoundaries)} key boundaries, reducing to {fullPianoKeyLocations}.",
+            LogLevel.DEBUG,
+        )
+        keyBoundaries = sorted(
+            sorted(keyBoundaries, key=lambda x: x[1] - x[0])[:fullPianoKeyLocations],
+            key=lambda x: x[0],
+        )  # Sort by width
+
     keyLocations = [
         (
             (keyBoundary[1] + keyBoundary[0]) // 2,
@@ -44,6 +67,11 @@ def determineKeyLocations(
         )
         for keyBoundary in keyBoundaries
     ]
+
+    logger.sendLog(
+        f"Detected {len(keyLocations)} keys.",
+        LogLevel.DEBUG,
+    )
     return keyLocations
 
 

@@ -6,7 +6,7 @@ from datetime import datetime
 class LogLevel(Enum):
     DEBUG = 0
     INFO = 1
-    WARN = 2
+    WARNING = 2
     ERROR = 3
 
 
@@ -21,7 +21,10 @@ class LogEmitter(QObject):
         if logLevel.value < self.logLevel.value:
             return
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.logSignal.emit(f"[{timestamp}] {logLevel.name} | {message}")
+        log = f"[{timestamp}] {logLevel.name} | {message}"
+        if logLevel == LogLevel.DEBUG:
+            print(log)
+        self.logSignal.emit(log)
 
 
-logger = LogEmitter(logLevel=LogLevel.INFO)
+logger = LogEmitter(logLevel=LogLevel.DEBUG)
